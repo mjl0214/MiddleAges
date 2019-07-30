@@ -3,7 +3,7 @@
  * @Author: mengjl
  * @LastEditors: mengjl
  * @Date: 2019-04-15 08:38:25
- * @LastEditTime: 2019-06-15 17:04:00
+ * @LastEditTime: 2019-07-22 14:45:18
  */
 
  /**
@@ -63,6 +63,21 @@ cc.Class({
         single : {
             default: false,
             tooltip : "单一",
+        },
+
+        maskOpacity: {
+            type: cc.Integer,
+            default: 127,
+            slide: true,
+            min: 0,
+            max: 255,
+            step: 1,
+            tooltip : "遮罩透明度",
+            serializable : false,
+            visible() {
+                // return this.isMask == true;
+                return false;
+            },
         },
 
         open_animation : {
@@ -171,6 +186,11 @@ cc.Class({
     getIsMask()
     {
         return this.isMask;
+    },
+
+    getMaskOpacity()
+    {
+        return this.maskOpacity;
     },
 
     getIsInput()

@@ -3,7 +3,7 @@
  * @Author: mengjl
  * @LastEditors: mengjl
  * @Date: 2019-04-12 08:51:20
- * @LastEditTime: 2019-06-11 09:44:37
+ * @LastEditTime: 2019-07-30 12:00:26
  */
 
 module.exports = {
@@ -24,15 +24,23 @@ module.exports = {
         }
         else
         {
+            this.clearPool(poolname);
             poolObj.prefab = prefab;
             poolObj.collect = new Array();
-            this.clearPool(poolname);
         }
         
         let initCount = num;
         for (let i = 0; i < initCount; ++i) {
             let _prefab_ = cc.instantiate(poolObj.prefab); // 创建节点
             poolObj.pool.put(_prefab_); // 通过 putInPool 接口放入对象池
+        }
+
+        var deps = cc.loader.getDependsRecursively(poolObj.prefab);
+        // console.log(deps);
+        for (let index = 0; index < deps.length; index++) {
+            for (let i = 0; i < initCount; i++) {
+                this._addQuote(deps[index]);
+            }
         }
 
         this._collect(poolname, 'init');
@@ -92,16 +100,21 @@ module.exports = {
     clearPool(poolname)
     {
         var poolObj = this._pools_[poolname];
-        if (poolObj) {
+        if (poolObj && poolObj.prefab) {
             this._collect(poolname, 'clear');
             
             for (let index = 0; index < poolObj.used.length; index++) {
                 const _prefab_ = poolObj.used[index];
                 poolObj.pool.put(_prefab_);
             }
+            
             poolObj.pool.clear();
             poolObj.used.length = 0;
             // 此处不能清理[收集器]里的内容，因为还要查看
+
+            cc.loader.release(poolObj.prefab);
+            poolObj.prefab = null;
+            // console.error(poolname)
         }
     },
 
@@ -213,4 +226,50 @@ module.exports = {
         }
         return collect[key];
     },
+
+    //----------------------------- 引用 ----------------------------//
+
+    _addQuote(key)
+    {
+        if (this.m_quoteCache == null) {
+            this.m_quoteCache = new Object();
+        }
+
+        if (this.m_quoteCache[key] == null) {
+            this.m_quoteCache[key] = {count : 0};
+        }
+        this.m_quoteCache[key].count++;
+    },
+
+    _subQuote(key)
+    {
+        if (this.m_quoteCache == null) {
+            this.m_quoteCache = new Object();
+        }
+
+        if (this.m_quoteCache[key]) {
+            this.m_quoteCache[key].count--;
+        }
+    },
+
+    _getQuoteInfo(key)
+    {
+        if (this.m_quoteCache == null) {
+            this.m_quoteCache = new Object();
+        }
+
+        return this.m_quoteCache[key];
+    },
+
+    _deleteQuote(key)
+    {
+        // console.log(key, this.m_quoteCache[key]);
+        if (this.m_quoteCache == null) {
+            this.m_quoteCache = new Object();
+        }
+        if (this.m_quoteCache[key]) {
+            delete this.m_quoteCache[key];
+        }
+    },
+    
 };

@@ -3,7 +3,7 @@
  * @Author: mengjl
  * @LastEditors: mengjl
  * @Date: 2019-04-15 08:38:25
- * @LastEditTime: 2019-06-11 09:12:50
+ * @LastEditTime: 2019-07-22 14:32:19
  */
 
  /**
@@ -83,6 +83,11 @@ cc.Class({
     setMask(mask)
     {
         this.maskNode.active = mask;
+    },
+
+    setMaskOpacity(opacity)
+    {
+        this.maskNode.opacity = opacity;
     },
 
     setInput(input)

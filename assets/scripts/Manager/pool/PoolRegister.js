@@ -1,9 +1,9 @@
 /*
  * @Description: 预制体注册类(挂到节点上用于初始化需要的预制体, 预制体节点上要挂上 PoolUnit 组件)
  * @Author: mengjl
- * @LastEditors: megjl
+ * @LastEditors: mengjl
  * @Date: 2019-04-12 08:51:20
- * @LastEditTime: 2019-04-12 14:29:12
+ * @LastEditTime: 2019-07-30 11:20:07
  */
 
 let PoolManager = require("PoolManager");
@@ -113,6 +113,9 @@ cc.Class({
         var poolName = '';
         for (let index = 0; index < this.prefabList.length; index++) {
             const prefab = this.prefabList[index];
+            if (prefab.isValid == false) {
+                continue;
+            }
             var poolUnit = prefab.data.getComponent('PoolUnit');
             if (poolUnit) {
                 poolName = poolUnit.getPoolName();
@@ -121,7 +124,6 @@ cc.Class({
                 this._log_('clear[%s]', poolName, collect);
             }
         }
-        
     },
 
     _log_:function(message, ...p)

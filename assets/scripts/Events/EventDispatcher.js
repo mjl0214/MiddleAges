@@ -5,7 +5,7 @@
 var EventDispatcher = module.exports;
 
 // 事件列表
-EventDispatcher.events = {};
+EventDispatcher.event_cache = {};
 
 /**
  * 监听事件
@@ -13,17 +13,35 @@ EventDispatcher.events = {};
  * @param  {[type]} listen [description]
  * @return {[type]}        [description]
  */
-EventDispatcher.listen = function (type, listen) {
+EventDispatcher.listen = function (type, callback, priority = 0) {
 	if (type == null || type == undefined) {
 		console.error('listen type is null');
+		return;
 	}
-	var event = this.events[type];
-	if(!event){
-		event = [];
-		this.events[type] = event;
+	var sub_cache = this.event_cache[type] || [];
+	var ievent = {callback : callback, priority : priority};
+	// if(!event){
+	// 	event = [];
+	// 	this.events[type] = event;
+	// }
+	if (priority > 0) {
+		let isPush = true;
+		for(let i = sub_cache.length - 1; i >=0; i--) {
+			if ( sub_cache[i].priority > priority) {
+				sub_cache.splice(i + 1, 0, ievent);
+				isPush = false;
+				break;
+			}
+		}
+		if (isPush) {
+			sub_cache.splice(0, 0, ievent);
+		}
+	} else {
+		sub_cache.push(ievent);
 	}
-	event.push(listen);
-	return listen;
+	this.event_cache[type] = sub_cache;
+
+	return callback;
 	//console.log('监听一个事件 type=', type, 'listen=', listen);
 };
 
@@ -34,11 +52,16 @@ EventDispatcher.listen = function (type, listen) {
  * @return {[type]}      [description]
  */
 EventDispatcher.dispatch = function(type, data){
-	var event = this.events[type];
-	if(event){
-		for (var i = 0; i < event.length; i++) {
-			event[i](data);
-		}
+	if (!type) {
+		return;
+	}
+	let sub_cache = this.event_cache[type];
+	if (!sub_cache) {
+		return;
+	}
+	for (let i = 0; i < sub_cache.length; i++) {
+		let ievent = sub_cache[i];
+		ievent.callback(data)
 	}
 };
 
@@ -48,16 +71,22 @@ EventDispatcher.dispatch = function(type, data){
  * @param  {[type]} listen [description]
  * @return {[type]}        [description]
  */
-EventDispatcher.remove = function(type, listen){
-	var event = this.events[type];
-	if(event){
-		for (var i = 0; i < event.length; i++) {
-			if(event[i] === listen){
-				event.splice(i,1);
-				//console.log('删除一个事件 type=', type, 'listen=', listen);
-				break;
-			}
+EventDispatcher.remove = function(type, callback){
+	if (!type || !callback) {
+		return;
+	}
+	let sub_cache = this.event_cache[type];
+	if (!sub_cache) {
+		return;
+	}
+	for (let i = 0; i < sub_cache.length; i++) {
+		if (sub_cache[i].callback === callback) {
+			sub_cache.splice(i, 1);
+			break;
 		}
+	}
+	if (sub_cache.length == 0) {
+		delete this.event_cache[type];
 	}
 };
 
@@ -67,12 +96,16 @@ EventDispatcher.remove = function(type, listen){
  * @return {[type]}        [description]
  */
 EventDispatcher.removeAll = function(type){
-	var event = this.events[type];
-	if(event){
-		event.length = 0;
+	if (!type || !callback) {
+		return;
 	}
+	let sub_cache = this.event_cache[type];
+	if (!sub_cache) {
+		return;
+	}
+	delete this.event_cache[type];
 };
 
 EventDispatcher.print = function(){
-	console.log('events:',this.events);
+	cc.LogMgr.log('events:',this.event_cache);
 };

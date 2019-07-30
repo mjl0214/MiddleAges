@@ -3,7 +3,7 @@
  * @Author: mengjl
  * @LastEditors: mengjl
  * @Date: 2019-04-15 08:38:25
- * @LastEditTime: 2019-07-09 16:12:21
+ * @LastEditTime: 2019-07-22 14:39:08
  */
 
  /**
@@ -93,37 +93,47 @@ module.exports = {
             var _model_ = _dialog._getDialogModel();
             
             if (_model_ == DialogDef.DialogModel.hide) {// 隐藏模式
-                _dialog.node.active = true;
-                _dialog.node.setPosition(cc.v2(0, 0));
-                var dlgComp = _dialog.getComponent('DialogBase');
-                dlgComp.onEnter(params);
-                dlgComp.playOpenAni();
-                // 显示遮罩
-                this._activeMask(dlgComp.getMaskId(), true);
-                // 重置显示层级
-                this.setDialogZIndex(dlgComp, zIndex);
+                this._reLoadDialog(_dialog, params, zIndex);
             }
             else if (_model_ == DialogDef.DialogModel.destory) {// 销毁模式
                 this.closeDialog(_dialog);
-                var dialogPrefab = this._createDialog(dialog_name, zIndex);
-                if (dialogPrefab) {
-                    var dlgComp = dialogPrefab.getComponent('DialogBase');
-                    dlgComp.onEnter(params);
-                    dlgComp.playOpenAni();
-                } 
+                this._loadDialog(dialog_name, params, zIndex); 
             }
         }
         else
         {
-            // 不是单一模式下，创建新的对话框
-            var dialogPrefab = this._createDialog(dialog_name, zIndex);
-            if (dialogPrefab) {
-                var dlgComp = dialogPrefab.getComponent('DialogBase');
-                dlgComp.onEnter(params);
-                dlgComp.playOpenAni();
-            }            
+            var _dialog_list = this.getDialogList(id);
+            if (_dialog_list.length == 0) {
+                // 不是单一模式下，创建新的对话框
+                this._loadDialog(dialog_name, params, zIndex); 
+            }
+            else
+            {
+                var _need_create_ = true;
+                var _dialog_ = _dialog_list[0];
+                var _model_ = _dialog_._getDialogModel();
+                if (_model_ == DialogDef.DialogModel.hide) {
+                    for (let index = 0; index < _dialog_list.length; index++) {
+                        const _dialog_ = _dialog_list[index];
+                        if (_dialog_.node.active == false) {
+                            this._reLoadDialog(_dialog_, params, zIndex);
+                            _need_create_ = false;
+                            break;
+                        }
+                    }
+                }
+                else if (_model_ == DialogDef.DialogModel.destory) {
+                    _need_create_ = true;
+                }
+
+                if (_need_create_ == true) {
+                    this._loadDialog(dialog_name, params, zIndex); 
+                }
+            }
+                       
         }
 
+        // console.log(this.m_dialogs);
         this._autoMaxZIndex();
     },
 
@@ -147,18 +157,42 @@ module.exports = {
 
             maskComp.setMask(dlgComp.getIsMask());
             maskComp.setInput(dlgComp.getIsInput());
+            // maskComp.setMaskOpacity(dlgComp.getMaskOpacity());
             maskComp.setMaskId(maskId);
             
             dlgComp.setMaskId(maskId);
             this._getParent().addChild(maskPrefab, zIndex);
         } else {
-           console.error('maskPrefab create fail'); 
+            console.error('maskPrefab create fail'); 
         }
 
         this._getParent().addChild(dialogPrefab, zIndex);
         this.m_dialogs.push(dialogPrefab);
 
         return dialogPrefab;
+    },
+
+    _loadDialog(dialog_name, params, zIndex)
+    {
+        var dialogPrefab = this._createDialog(dialog_name, zIndex);
+        if (dialogPrefab) {
+            var dlgComp = dialogPrefab.getComponent('DialogBase');
+            dlgComp.onEnter(params);
+            dlgComp.playOpenAni();
+        } 
+    },
+
+    _reLoadDialog(dialog, params, zIndex)
+    {
+        dialog.node.active = true;
+        dialog.node.setPosition(cc.v2(0, 0));
+        var dlgComp = dialog.getComponent('DialogBase');
+        dlgComp.onEnter(params);
+        dlgComp.playOpenAni();
+        // 显示遮罩
+        this._activeMask(dlgComp.getMaskId(), true);
+        // 重置显示层级
+        this.setDialogZIndex(dlgComp, zIndex);
     },
 
     /**
@@ -218,6 +252,19 @@ module.exports = {
             }
         }
         return null;
+    },
+
+    getDialogList(id)
+    {
+        var list = new Array();
+        for (let index = this.m_dialogs.length - 1; index >= 0; index--) {
+            const dialogPrefab = this.m_dialogs[index];
+            var dlgComp = dialogPrefab.getComponent('DialogBase');
+            if (dlgComp.dialog_id == id) {
+                list.push(dlgComp);
+            }
+        }
+        return list;
     },
 
     setDialogZIndex(dialog, zIndex)

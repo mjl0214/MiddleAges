@@ -3,7 +3,7 @@
  * @Author: mengjl
  * @LastEditors: mengjl
  * @Date: 2019-04-18 16:52:16
- * @LastEditTime: 2019-06-11 09:31:08
+ * @LastEditTime: 2019-07-30 11:20:22
  */
 
  /**
@@ -156,6 +156,9 @@ cc.Class({
         var poolName = '';
         for (let index = 0; index < this.prefabList.length; index++) {
             const prefab = this.prefabList[index];
+            if (prefab.isValid == false) {
+                continue;
+            }
             var poolUnit = prefab.data.getComponent(this._componetName);
             if (poolUnit) {
                 poolName = poolUnit.getDialogName();
